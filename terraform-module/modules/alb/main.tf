@@ -1,12 +1,12 @@
 provider "aws" {
-  region= "ap-south-1"
+  region= var.region
 }
 
 # SG for Alb
 resource "aws_security_group" "alb_sg" {
-  name= "${project}-alb-sg"
+  name= "${var.project}-alb-sg"
   description= "Allows http from alb"
-  vpc_id=module.vpc.vpc_id
+  vpc_id=var.vpc_id
 
   ingress {     #inbound rules
     from_port= 80
@@ -25,19 +25,19 @@ resource "aws_security_group" "alb_sg" {
 
 # Tagrget-group
 resource "aws_lb_target_group" "my_tg" {
-  name = "${project}-tg"
+  name = "${var.project}-tg"
   port = 80
   protocol = "HTTP"
-  vpc_id = module.vpc.vpc_id
+  vpc_id = var.vpc_id
 
 }
 
 # ALB
 resource "aws_lb" "my_alb" {
-  name = "${project}-alb"
+  name = "${var.project}-alb"
   internal = false
   load_balancer_type = "application"
-  subnets = module.vpc.subnets_id
+  subnets = var.subnets_id
   security_groups = [aws_security_group.alb_sg.id]
 }
 

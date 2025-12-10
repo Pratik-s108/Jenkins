@@ -6,7 +6,7 @@ provider "aws" {
 resource "aws_vpc" "my_vpc"{
     cidr_block= var.vpc_cidr_block
     tags={
-        name= "${project}-vpc"
+        name= "${var.project}-vpc"
     }
 }
 
@@ -17,7 +17,7 @@ resource "aws_subnet" "public_sub"{
     availability_zone = var.az_1
     map_public_ip_on_launch= true
     tags={
-        name= "${project}-public_sub"
+        name= "${var.project}-public_sub"
     }
 }
 
@@ -28,7 +28,7 @@ resource "aws_subnet" "private_sub"{
     availability_zone = var.az_2
     #map_public_ip_on_launch= true
     tags={
-        name= "${project}-private_sub"
+        name= "${var.project}-private_sub"
     }
 }
 
@@ -36,7 +36,7 @@ resource "aws_subnet" "private_sub"{
 resource "aws_internet_gateway" "my_igw"{
     vpc_id = aws_vpc.my_vpc.id
     tags={
-        name= "${project}-my-igw"
+        name= "${var.project}-my-igw"
     }
 }
 
