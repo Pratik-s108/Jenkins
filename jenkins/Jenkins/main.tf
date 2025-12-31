@@ -5,13 +5,14 @@ provider "aws" {
 # Eks-cluster
 resource "aws_eks_cluster" "cluster_block" {
   name = "My-cluster"
+  version  = "1.33"
 
   access_config {
     authentication_mode = "API"
   }
 
   role_arn = aws_iam_role.my_role.arn
-  version  = "1.31"
+  
 
   vpc_config {
     subnet_ids = data.aws_subnets.default_subnets.ids #subnet ids from data block
