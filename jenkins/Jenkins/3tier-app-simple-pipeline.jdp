@@ -1,0 +1,54 @@
+// before running pipeline run this command in server where the pipeline runs
+// ['sudo chown ubuntu:jenkins /var/run/docker.sock'] -
+// It works temporarily
+// allowing ubuntu/jenkins users to communicate directly to the Docker daemon
+// OR
+// ['sudo usermod -aG docker jenkins && sudo systemctl restart jenkins'] - ubuntu can be added to
+// Jenkins needs Docker access, so we add the Jenkins user to the docker group.
+
+// Docker socket ownership remains root:docker, and group membership provides controlled access
+// We avoid changing socket ownership because it is temporary and insecure
+// For learning purpose we can change docker.sock (docker socket) ownership, but its work temporarily
+// If Docker restart or system reboot, your changes will lost
+
+pipeline {
+    agent any 
+        stages{
+            stage('Code-clone'){
+                steps{
+                    git url: 'https://github.com/Pratik-s108/EASY_CRUD.git', branch: 'devops'
+                    echo 'clone is complete'
+                }
+            }
+            stage('build-image-fe/be'){
+                steps{  
+                    sh ''' 
+                          docker build -t pratiklanjewar4198040/backend:latest backend/
+                          docker build -t pratiklanjewar4198040/frontend:latest frontend/
+                    '''
+                    echo 'fe/be image is builded'
+                }
+            }
+            stage('image-push'){
+                steps{
+                    withCredentials([usernamePassword(
+                        credentialsId: 'dockerID', 
+                        passwordVariable: 'dockerpassword', 
+                        usernameVariable: 'dockeruser')])
+                    {
+                        sh '''docker login -u $dockeruser -p $dockerpassword
+                              docker push pratiklanjewar4198040/frontend:latest
+                              docker push pratiklanjewar4198040/backend:latest'''
+                         echo 'pushed to dockerhub'
+                    }
+                }
+            }
+            stage('simple-deploy'){
+                steps{
+                    sh '''kubectl apply -f simple-deploy/'''
+                    echo 'app is deployed on k8s'
+                }
+            }
+        }
+
+}

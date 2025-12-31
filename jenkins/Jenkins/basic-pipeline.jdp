@@ -1,0 +1,45 @@
+
+ //  before this install docker in instance where your pipeline will run and add jenkins 
+ //  in docker group OR make ubuntu owner od docker path /var/run/docker.sock,
+ //  since ubuntu doen't have docker permissions
+
+pipeline{
+    agent any         // Node/slave instance where the pipeline will run if defined (any = master server)
+    stages{           // stages of pipeline (clone/build/push/deploy)
+        stage('clone'){           // stage-1 (clone code from github)
+            steps{                // steps of cloning code (commands of git)
+                git url: 'git-URL' , branch: 'main'    // git clone command and its branch from where code pulled
+                echo 'Cloning step completed'          // printing message for confirmation cloning is complete
+            }
+        }
+        stage('build'){                             // stage-2 (build image using docker)
+            steps{                                  // steps of building image (commands of docker)
+                sh 'docker build -t nginx_img:latest .'     //using sh for shell commands
+                echo 'Build step completed'                 // printing message for confirmation build is complete
+            }
+        }
+        stage('push'){                                 // stage-3 (push image to docker-hub)
+            steps{                                    // steps for pushing image
+                withCredentials([usernamePassword(  // adding credentials form jenkins credentials 
+                    credentialsId: 'dockerID',       // credentialsId where original user/pass of dockerhub is saved 
+                    usernameVariable: 'dockeruser',   // using variables as username for dockerhub username 
+                    passwordVariable: 'dockerpass'    // using variables as passowrd for dockerhub password
+                    )]) {
+                        sh 'docker login -u $dockeruser -p $dockerpass'             
+                        sh 'docker tag nginx-img:latest <username-dockerhub>/nginx_img:latest'
+                        sh 'docker push <username-dockerhub>/nginx_img:latest'
+                    }
+                echo 'push to dockerhub'
+            }
+        }
+        stage('deploy'){                // stage-4 deployment (using docker container)
+            steps{                      // steps to deploy app
+                sh 'docker run -d -p 80:80 <username-dockerhub>/nginx_img:latest'
+                echo 'deployed(In docker container) step completed'
+            }
+        }
+    }
+}
+
+// instead of "withCredentials" we can use original credentials of dockerhub but anyone can 
+// get our credentials and access to avoid this we use "withCredentials" for hidde credentials

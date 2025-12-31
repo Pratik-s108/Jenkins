@@ -1,0 +1,59 @@
+pipeline{
+    agent any
+        stages {
+            stage ('code-Clone'){
+                steps{
+                    git url: 'https://github.com/Pratik-s108/EASY_CRUD.git', branch: 'devops'
+                    echo 'clone successed'
+                }
+            }
+            stage ('SQ-Build'){
+                steps {
+                    sh '''cd backend
+                             mvn clean install -DskipTests'''
+                }
+            }
+            stage ('SQ-test'){
+                steps {
+                    withSonarQubeEnv(installationName: 'sonarqube', credentialsId: 'sonar-ID') {
+                        sh '''cd backend
+                               mvn sonar:sonar \
+                              -Dsonar.projectKey=project-1 \
+                              -Dsonar.projectName='project-1' \
+                              '''
+                    }
+                }
+            }
+            stage ('SQ-quality-gate'){
+                steps {
+                    timeout(5) {
+                        waitForQualityGate abortPipeline: true, credentialsId: 'sonar-ID'
+                    }
+                }
+            }
+            stage('build-image-fe/be'){
+                steps{
+                    sh '''docker build -t pratiklanjewar4198040/backend:latest backend/
+                          docker build -t pratiklanjewar4198040/frontend:latest frontend/
+                    '''
+                }
+            }
+            stage('image-push'){
+                steps{
+                    withCredentials(usernamePasswoed[(
+                        credentialsId: 'dockerID'
+                        usernameVariable: 'dockeruser'
+                        passwordVariable: 'dockerpassword'
+                    )]){
+                        sh '''docker login -u $dockeruser -p $dockerpassword
+                              docker push pratiklanjewar4198040/frontend:latest'''
+                    }
+                }
+            }
+            stage ('deployment'){
+                steps{
+                    echo 'deploy succed'
+                }
+            }
+        }
+}

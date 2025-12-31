@@ -1,0 +1,6 @@
+sudo apt update -y
+sudo apt install nginx -y
+sudo wget https://templatemo.com/live/templatemo_600_prism_flux   # donloading html/css template website
+mv templatemo_600_prism_flux index.html    # renaming file 
+sudo cp index.html /var/www/html/
+sudo systemctl start nginx
